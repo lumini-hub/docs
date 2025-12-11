@@ -1,0 +1,1271 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lumi Docs</title>
+    <link rel="icon" href="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" type="image/x-icon">
+
+    <!-- Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/arduino-light.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+    <!-- Marked Library -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <!-- DOMPurify for security -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-out forwards',
+                        'fade-in-up': 'fadeInUp 0.5s ease-out forwards',
+                        'slide-in-right': 'slideInRight 0.3s ease-out forwards',
+                        'pop-in': 'popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        slideInRight: {
+                            '0%': { transform: 'translateX(100%)', opacity: '0' },
+                            '100%': { transform: 'translateX(0)', opacity: '1' },
+                        },
+                        popIn: {
+                            '0%': { opacity: '0', transform: 'scale(0.9)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* Slightly darker than pure white for block contrast */
+            color: #1e293b;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* --- Scrollbar --- */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; transition: background 0.2s; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* --- Markdown Styles --- */
+        .markdown-body h1 { font-size: 1.8rem; font-weight: 800; margin: 1rem 0; letter-spacing: -0.025em; color: #0f172a; }
+        .markdown-body h2 { font-size: 1.5rem; font-weight: 700; margin: 1.5rem 0 0.75rem; letter-spacing: -0.025em; color: #1e293b; }
+        .markdown-body p { margin-bottom: 1rem; line-height: 1.8; font-size: 1.05rem; color: #334155; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 1rem; }
+        .markdown-body code { background-color: #f1f5f9; padding: 0.2rem 0.4rem; border-radius: 0.25rem; font-family: monospace; font-size: 0.9em; color: #ef4444; border: 1px solid #e2e8f0; }
+        .markdown-body pre { background-color: #1e293b; padding: 1.25rem; border-radius: 0.75rem; overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+        .markdown-body pre code { background-color: transparent; padding: 0; color: #e2e8f0; font-size: 0.9rem; border: none; }
+        .markdown-body img { max-width: 100%; border-radius: 0.75rem; margin: 1.5rem 0; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); }
+        .markdown-body a { color: #2563eb; text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+        .markdown-body a:hover { color: #1d4ed8; }
+
+        /* Sidebar & Navigation */
+        .nav-item { border-right: 3px solid transparent; transition: all 0.2s ease-in-out; }
+        .nav-item.active { background-color: #f1f5f9; color: #0f172a; font-weight: 600; border-right-color: #0f172a; }
+        .nav-item:hover:not(.active) { background-color: #f8fafc; transform: translateX(4px); }
+
+        /* Page Item Styles */
+        .page-item { border-left: 3px solid transparent; transition: all 0.2s ease; }
+        .page-item:hover { background-color: #f1f5f9; }
+        .page-item.active { background-color: #e0f2fe; color: #0369a1; border-left-color: #0284c7; }
+        
+        /* Block Controls */
+        .block-item { transition: all 0.2s ease; }
+        .block-item:hover { border-color: #94a3b8; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-1px); }
+        .block-item:hover .block-controls { opacity: 1; transform: translateY(0); pointer-events: auto; }
+        .block-controls { opacity: 0; transform: translateY(5px); transition: all 0.2s ease; pointer-events: none; }
+        
+        /* Content Rows in Editor */
+        .content-row { transition: all 0.1s ease; }
+        
+        /* Avatar Generator Classes */
+        .avatar-placeholder { display: flex; align-items: center; justify-content: center; font-weight: 700; color: white; text-transform: uppercase; user-select: none; letter-spacing: 0.05em; }
+
+        /* Utility */
+        .glass-header { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(226, 232, 240, 0.8); }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+    </style>
+</head>
+<body class="min-h-screen bg-slate-50 overflow-hidden text-slate-800">
+
+    <!-- Loading Overlay -->
+    <div id="global-loader" class="fixed inset-0 bg-white z-[100] flex items-center justify-center transition-opacity duration-500">
+        <div class="flex flex-col items-center gap-6">
+            <div class="relative">
+                <div class="absolute inset-0 bg-blue-100 rounded-full animate-ping opacity-75"></div>
+                <img src="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" class="relative w-20 h-20 animate-bounce" alt="Logo">
+            </div>
+            <div class="flex flex-col items-center gap-2">
+                <div class="loader w-8 h-8 border-4 border-slate-200 border-t-slate-900 rounded-full animate-spin"></div>
+                <p class="text-sm text-slate-400 font-medium tracking-wide animate-pulse">LOADING LUMI</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[110] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- AUTH SECTION -->
+    <div id="auth-container" class="hidden min-h-screen flex items-center justify-center p-4 overflow-y-auto bg-white/50 backdrop-blur-sm">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-2xl shadow-slate-200/50 border border-slate-100 overflow-hidden animate-fade-in-up my-auto">
+            <!-- Login View -->
+            <div id="login-view" class="p-8">
+                <div class="text-center mb-8">
+                    <img src="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" alt="Lumi Docs" class="w-14 h-14 mx-auto mb-4 drop-shadow-sm transform hover:scale-110 transition-transform duration-300">
+                    <h2 class="text-3xl font-bold text-slate-900 mb-2">Welcome back</h2>
+                    <p class="text-slate-500 text-sm">Sign in to access your creative space</p>
+                </div>
+                <form id="login-form" class="space-y-4">
+                    <div class="group">
+                        <input type="email" id="login-email" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200" placeholder="Email" required>
+                    </div>
+                    <div class="group">
+                        <input type="password" id="login-password" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all duration-200" placeholder="Password" required>
+                        <div class="text-right mt-2"><a href="#" onclick="switchAuth('forgot')" class="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline">Forgot Password?</a></div>
+                    </div>
+                    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 active:scale-[0.98] flex justify-center items-center gap-2">
+                        Sign In <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </form>
+                <div class="my-8 flex items-center"><div class="flex-grow border-t border-slate-200"></div><span class="px-3 text-slate-400 text-xs font-bold uppercase tracking-wider">Or continue with</span><div class="flex-grow border-t border-slate-200"></div></div>
+                <button onclick="handleGoogleLogin()" class="w-full bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-medium py-3 rounded-xl transition-colors flex justify-center items-center gap-2 shadow-sm hover:shadow-md">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5" alt="Google"> 
+                    <span>Google</span>
+                </button>
+                <div class="mt-8 text-center text-sm text-slate-600">Don't have an account? <a href="#" onclick="switchAuth('signup')" class="text-blue-600 font-bold hover:underline">Sign up free</a></div>
+            </div>
+            <!-- Signup View -->
+            <div id="signup-view" class="hidden p-8">
+                <div class="text-center mb-8"><h2 class="text-3xl font-bold text-slate-900">Create Account</h2></div>
+                <form id="signup-form" class="space-y-4">
+                    <input type="text" id="signup-name" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="Full Name" required>
+                    <input type="email" id="signup-email" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="Email" required>
+                    <input type="password" id="signup-password" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all" placeholder="Password" required>
+                    <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl transition-all shadow-lg shadow-blue-600/20 active:scale-[0.98]">Create Account</button>
+                </form>
+                <div class="mt-6 text-center text-sm text-slate-600">Already have an account? <a href="#" onclick="switchAuth('login')" class="text-blue-600 font-bold hover:underline">Sign in</a></div>
+            </div>
+            <!-- Forgot Password View -->
+            <div id="forgot-view" class="hidden p-8">
+                <div class="text-center mb-8"><h2 class="text-2xl font-bold text-slate-900">Reset Password</h2><p class="text-slate-500 text-sm mt-2">Enter your email to receive reset instructions</p></div>
+                <form id="forgot-form" class="space-y-4">
+                    <input type="email" id="forgot-email" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:border-blue-500 outline-none transition-all" placeholder="Email" required>
+                    <button type="submit" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-medium py-3 rounded-xl shadow-lg transition-all">Send Reset Link</button>
+                </form>
+                <div class="mt-6 text-center text-sm"><a href="#" onclick="switchAuth('login')" class="text-slate-500 hover:text-slate-900 font-medium">← Back to Login</a></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- APP LAYOUT -->
+    <div id="app-wrapper" class="hidden h-screen flex relative overflow-hidden bg-white">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-64 bg-slate-50/50 border-r border-slate-200/60 backdrop-blur-xl flex-shrink-0 flex flex-col hidden md:flex z-30 transition-all duration-300">
+            <div class="h-16 flex items-center px-6 border-b border-slate-200/60 cursor-pointer" onclick="navigateTo('feed')">
+                <img src="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" alt="Logo" class="w-8 h-8 mr-3 transform hover:rotate-12 transition-transform duration-300">
+                <span class="font-bold text-lg tracking-tight text-slate-900">Lumi Docs</span>
+            </div>
+            
+            <nav class="flex-grow p-4 space-y-2 overflow-y-auto">
+                <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest px-4 mb-3 mt-4">Menu</div>
+                <button onclick="navigateTo('feed')" id="nav-feed" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl text-sm font-medium">
+                    <i data-lucide="compass" class="w-5 h-5"></i> Discover
+                </button>
+                <button onclick="navigateTo('dashboard')" id="nav-dashboard" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl text-sm font-medium">
+                    <i data-lucide="share-2" class="w-5 h-5"></i> Shared with Me
+                </button>
+                
+                <div class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest px-4 mb-3 mt-8">Workspace</div>
+                <button onclick="navigateTo('profile')" id="nav-profile" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-slate-600 rounded-xl text-sm font-medium">
+                    <i data-lucide="layout" class="w-5 h-5"></i> My Projects
+                </button>
+            </nav>
+
+            <div class="p-4 border-t border-slate-200/60">
+                <button onclick="startNewDoc()" class="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 hover:-translate-y-0.5 flex items-center justify-center gap-2 mb-4">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> New Project
+                </button>
+                
+                <div class="flex items-center gap-3 px-2 cursor-pointer hover:bg-white p-2 rounded-xl transition-all border border-transparent hover:border-slate-100 hover:shadow-sm" onclick="showProfileModal()">
+                    <div id="sidebar-user-avatar" class="w-10 h-10 flex-shrink-0 transition-transform hover:scale-105">
+                        <!-- Img via JS -->
+                    </div>
+                    <div class="overflow-hidden">
+                        <p id="sidebar-user-name" class="text-sm font-bold text-slate-900 truncate">User</p>
+                        <p class="text-[10px] text-slate-500 truncate font-medium">View Settings</p>
+                    </div>
+                </div>
+                <button onclick="handleLogout()" class="mt-2 text-[10px] font-bold text-red-500 hover:text-red-700 w-full text-left px-2 uppercase tracking-wide opacity-60 hover:opacity-100 transition-opacity">Sign Out</button>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <div class="flex-grow flex flex-col h-full overflow-hidden bg-slate-50 relative">
+            
+            <!-- Mobile Header -->
+            <div class="md:hidden h-16 bg-white/90 backdrop-blur-md border-b border-slate-200 flex items-center justify-between px-4 flex-shrink-0 z-20 sticky top-0">
+                <div class="flex items-center gap-2" onclick="navigateTo('feed')">
+                    <img src="https://i.ibb.co/XZVSKkBT/Screenshot-2025-11-10-174930-Photoroom.png" class="w-8 h-8">
+                    <span class="font-bold text-lg text-slate-900">Lumi</span>
+                </div>
+                <button onclick="startNewDoc()" class="bg-slate-900 text-white p-2 rounded-lg shadow-lg active:scale-95 transition-transform"><i data-lucide="plus" class="w-5 h-5"></i></button>
+            </div>
+
+            <!-- SEARCH BAR (Global for Content Area) -->
+            <div class="glass-header px-8 py-4 flex items-center gap-4 flex-shrink-0 sticky top-0 z-10 hidden md:flex">
+                <div class="flex-1 relative group">
+                    <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-3 top-1/2 transform -translate-y-1/2 group-focus-within:text-blue-500 transition-colors"></i>
+                    <input type="text" id="global-search" oninput="handleSearch(this.value)" class="w-full bg-slate-50 hover:bg-slate-100 focus:bg-white border border-slate-200 focus:border-blue-500 rounded-xl pl-10 pr-4 py-2.5 outline-none text-slate-700 text-sm placeholder-slate-400 transition-all shadow-sm focus:shadow-md focus:ring-4 focus:ring-blue-500/10" placeholder="Search documentation, guides, and projects...">
+                </div>
+                <div class="flex gap-2">
+                    <button class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"><i data-lucide="bell" class="w-5 h-5"></i></button>
+                </div>
+            </div>
+
+            <!-- SCROLLABLE CONTENT -->
+            <div class="flex-grow overflow-y-auto custom-scrollbar p-4 md:p-10" id="main-scroll-area">
+                
+                <!-- VIEW 1: PUBLIC FEED -->
+                <div id="view-feed" class="w-full max-w-7xl mx-auto space-y-8 animate-fade-in">
+                    <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-3xl md:text-4xl font-extrabold text-slate-900 mb-2 tracking-tight">Discover</h1>
+                            <p class="text-slate-500 text-lg">Explore the latest documentation from the community.</p>
+                        </div>
+                    </div>
+                    <div id="public-docs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                    <div id="public-empty" class="hidden flex-col items-center justify-center py-32 text-center text-slate-400">
+                        <div class="bg-slate-50 p-6 rounded-full mb-4">
+                            <i data-lucide="globe" class="w-12 h-12 opacity-50"></i>
+                        </div>
+                        <h3 class="text-lg font-medium text-slate-600">No public documents yet</h3>
+                        <p>Be the first to publish something amazing!</p>
+                    </div>
+                </div>
+
+                <!-- VIEW 2: DASHBOARD (Shared) -->
+                <div id="view-dashboard" class="hidden w-full max-w-7xl mx-auto space-y-8 animate-fade-in">
+                    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl p-8 md:p-10 text-white shadow-2xl shadow-indigo-500/20 relative overflow-hidden group">
+                        <div class="relative z-10 transition-transform duration-500 group-hover:translate-x-2">
+                            <h1 class="text-3xl md:text-4xl font-bold mb-3">Shared Dashboard</h1>
+                            <p class="text-indigo-100 mb-8 text-lg max-w-xl">Collaborate and view documents shared with you by other team members and users.</p>
+                            <div class="inline-flex bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20 items-center gap-4 hover:bg-white/20 transition-colors">
+                                <div class="p-3 bg-white/10 rounded-xl"><i data-lucide="users" class="w-6 h-6 text-white"></i></div>
+                                <div>
+                                    <p class="text-[10px] text-indigo-200 uppercase font-bold tracking-widest">Shared With Me</p>
+                                    <p id="stat-shared-docs" class="text-2xl font-bold leading-none mt-1">0</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="absolute -right-10 -bottom-32 w-80 h-80 bg-white/10 rounded-full blur-3xl group-hover:scale-110 transition-transform duration-700"></div>
+                        <div class="absolute right-40 top-10 w-40 h-40 bg-purple-500/30 rounded-full blur-2xl animate-pulse"></div>
+                    </div>
+                    
+                    <div id="dash-content-shared" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    <div id="dash-empty" class="hidden py-24 text-center text-slate-500 flex flex-col items-center">
+                        <div class="bg-slate-50 p-6 rounded-full mb-4"><i data-lucide="inbox" class="w-10 h-10 text-slate-300"></i></div>
+                        <p class="font-medium">No documents have been shared with you yet.</p>
+                    </div>
+                </div>
+
+                <!-- VIEW 3: PROFILE (Multi-User) -->
+                <div id="view-profile" class="hidden w-full max-w-7xl mx-auto space-y-10 animate-fade-in">
+                    <!-- Profile Header -->
+                    <div class="bg-white border border-slate-200 rounded-3xl p-8 md:p-10 flex flex-col md:flex-row items-center md:items-start gap-8 shadow-sm relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-32 bg-gradient-to-r from-blue-50 to-slate-50"></div>
+                        <div id="profile-page-avatar" class="w-32 h-32 rounded-full bg-white overflow-hidden border-4 border-white shadow-lg relative z-10 flex-shrink-0"></div>
+                        <div class="flex-grow text-center md:text-left relative z-10 pt-4 md:pt-12">
+                            <h1 id="profile-page-name" class="text-3xl font-bold text-slate-900 mb-1">User Name</h1>
+                            <p id="profile-page-email" class="text-slate-500 mb-6 font-medium">user@email.com</p>
+                            
+                            <button id="profile-edit-btn" onclick="showProfileModal()" class="hidden text-sm bg-white border border-slate-200 px-5 py-2.5 rounded-xl hover:bg-slate-50 hover:border-slate-300 transition-all font-semibold inline-flex items-center gap-2 shadow-sm text-slate-700">
+                                <i data-lucide="settings" class="w-4 h-4"></i> Edit Profile
+                            </button>
+                        </div>
+                        <div class="relative z-10 md:pt-12 flex gap-4">
+                            <div class="text-center px-8 py-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                                <p class="text-[10px] text-slate-400 uppercase font-extrabold tracking-widest mb-1">Projects</p>
+                                <p id="profile-total-docs" class="text-3xl font-black text-slate-900">0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- My Projects Grid -->
+                    <div>
+                        <div class="flex items-center justify-between mb-8">
+                            <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2" id="profile-section-title"><i data-lucide="folder-open" class="w-6 h-6 text-slate-400"></i> Projects</h2>
+                            <button id="profile-new-btn" onclick="startNewDoc()" class="hidden text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors shadow-md shadow-blue-500/20">Create New</button>
+                        </div>
+                        <div id="profile-docs-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                        <div id="profile-empty" class="hidden py-16 text-center border-2 border-dashed border-slate-200 rounded-3xl bg-slate-50/50">
+                            <div class="bg-white p-4 rounded-full mb-4 inline-block shadow-sm"><i data-lucide="folder-plus" class="w-8 h-8 text-slate-400"></i></div>
+                            <h3 class="text-lg font-medium text-slate-900">No projects yet</h3>
+                            <p class="text-slate-500 mb-6 max-w-xs mx-auto mt-2">Create your first documentation project to see it here.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Mobile Bottom Nav -->
+            <div class="md:hidden h-20 bg-white border-t border-slate-200 flex justify-around items-center px-4 flex-shrink-0 z-20 pb-safe">
+                <button onclick="navigateTo('feed')" class="group flex flex-col items-center p-2 text-slate-400 hover:text-slate-900 transition-colors">
+                    <div class="group-hover:-translate-y-1 transition-transform duration-200"><i data-lucide="compass" class="w-6 h-6"></i></div>
+                    <span class="text-[10px] mt-1 font-bold">Discover</span>
+                </button>
+                <button onclick="navigateTo('dashboard')" class="group flex flex-col items-center p-2 text-slate-400 hover:text-slate-900 transition-colors">
+                    <div class="group-hover:-translate-y-1 transition-transform duration-200"><i data-lucide="share-2" class="w-6 h-6"></i></div>
+                    <span class="text-[10px] mt-1 font-bold">Shared</span>
+                </button>
+                <button onclick="navigateTo('profile')" class="group flex flex-col items-center p-2 text-slate-400 hover:text-slate-900 transition-colors">
+                    <div class="group-hover:-translate-y-1 transition-transform duration-200"><i data-lucide="user" class="w-6 h-6"></i></div>
+                    <span class="text-[10px] mt-1 font-bold">Profile</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- FULL SCREEN EDITOR (MULTI-PAGE) -->
+    <div id="view-editor" class="hidden fixed inset-0 z-[50] bg-white flex flex-col animate-pop-in">
+        <header class="glass-header px-6 h-16 flex items-center justify-between flex-shrink-0 z-20">
+            <div class="flex items-center gap-4">
+                <button onclick="goBack()" class="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors" title="Back"><i data-lucide="arrow-left" class="w-5 h-5"></i></button>
+                <div class="h-8 w-px bg-slate-200"></div>
+                <input type="text" id="doc-title" class="text-lg font-bold text-slate-900 placeholder-slate-300 outline-none bg-transparent w-full md:w-96 truncate" placeholder="Untitled Project">
+            </div>
+            <div class="flex gap-3">
+                <div id="save-status" class="hidden md:flex items-center text-xs text-slate-400 font-medium px-3"><span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span> Draft</div>
+                <button onclick="handleUpload()" id="upload-btn" class="bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all shadow-lg shadow-slate-900/10 hover:shadow-slate-900/20 active:scale-95">Save Changes</button>
+            </div>
+        </header>
+
+        <div class="flex-grow flex overflow-hidden">
+            <!-- Sidebar: PAGE LIST -->
+            <div class="w-72 border-r border-slate-200 bg-slate-50/80 flex flex-col flex-shrink-0 transition-all">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center">
+                    <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Structure</span>
+                    <button onclick="addPage()" class="p-1.5 hover:bg-white hover:shadow-sm rounded-lg text-slate-600 transition-all" title="Add Page"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                </div>
+                <div id="editor-page-list" class="flex-grow overflow-y-auto p-3 space-y-1">
+                    <!-- Pages Injected Here -->
+                </div>
+                
+                <!-- Bottom: Metadata Settings -->
+                <div class="p-4 border-t border-slate-200 bg-white overflow-y-auto shadow-[0_-5px_15px_rgba(0,0,0,0.02)]" style="max-height: 50%;">
+                    <button onclick="document.getElementById('editor-settings-form').classList.toggle('hidden')" class="w-full flex justify-between items-center text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 hover:text-slate-800 transition-colors">
+                        <span>Project Settings</span>
+                        <i data-lucide="chevron-down" class="w-3 h-3"></i>
+                    </button>
+                    <form id="editor-settings-form" class="hidden space-y-4 animate-fade-in">
+                        <input type="hidden" id="edit-doc-id">
+                        
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Category</label>
+                            <select id="doc-category" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-blue-500 focus:bg-white transition-all"><option value="Project">Project</option><option value="Guide">Guide</option><option value="API">API</option><option value="Design">Design System</option></select>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Visibility</label>
+                            <select id="doc-visibility" onchange="toggleShareField()" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-slate-50 outline-none focus:border-blue-500 focus:bg-white transition-all"><option value="public">Public (Everyone)</option><option value="private">Private (Only Me)</option><option value="shared">Shared (Specific People)</option></select>
+                        </div>
+                        
+                        <div id="share-field-container" class="hidden">
+                             <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Share with</label>
+                            <input type="text" id="doc-shared-with" class="w-full text-xs p-2.5 border border-slate-200 rounded-lg bg-white outline-none focus:border-blue-500" placeholder="user@email.com, ...">
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase">Cover Image</label>
+                            <div class="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                                <button type="button" onclick="setImageMode('upload')" id="btn-img-upload" class="flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all">Upload</button>
+                                <button type="button" onclick="setImageMode('url')" id="btn-img-url" class="flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all">URL</button>
+                            </div>
+                            
+                            <input type="file" id="doc-image-file" class="hidden" accept="image/*">
+                            <label id="lbl-img-upload" for="doc-image-file" class="block w-full px-2 py-6 rounded-lg border-2 border-dashed border-slate-200 text-center cursor-pointer hover:bg-slate-50 hover:border-slate-400 transition-all text-[10px] text-slate-500 group">
+                                <i data-lucide="image-plus" class="w-6 h-6 mx-auto mb-1 text-slate-300 group-hover:text-slate-500 transition-colors"></i>
+                                Click to select image
+                            </label>
+                            
+                            <input type="url" id="doc-image-url" class="hidden w-full text-xs p-2.5 border border-slate-200 rounded-lg outline-none focus:border-blue-500 transition-all" placeholder="https://image.url...">
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Editor Area -->
+            <div class="flex-grow flex flex-col bg-slate-50 relative">
+                <div class="px-10 pt-10 pb-4">
+                    <input type="text" id="current-page-title" oninput="updatePageTitle(this.value)" class="text-4xl font-extrabold text-slate-900 placeholder-slate-300 outline-none bg-transparent w-full border-none p-0 focus:ring-0" placeholder="Page Title">
+                </div>
+
+                <div class="flex-grow overflow-y-auto custom-scrollbar relative px-10 pb-32" id="editor-scroll-area">
+                    <div class="max-w-3xl mx-auto min-h-full">
+                        <div id="editor-blocks-container" class="space-y-4 pb-20"></div>
+                        
+                        <!-- Floating New Block Button -->
+                        <div class="fixed bottom-8 left-1/2 lg:left-[calc(50%+144px)] transform -translate-x-1/2 z-20">
+                            <button type="button" onclick="addBlock()" class="bg-slate-900 hover:bg-slate-800 text-white p-4 rounded-full shadow-[0_8px_30px_rgba(0,0,0,0.2)] hover:shadow-[0_15px_30px_rgba(0,0,0,0.3)] hover:scale-110 active:scale-95 transition-all duration-300 flex items-center justify-center group">
+                                <i data-lucide="plus" class="w-6 h-6 group-hover:rotate-90 transition-transform duration-300"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="upload-progress-container" class="hidden fixed top-0 left-0 right-0 h-1 bg-slate-100 z-[60]"><div id="upload-progress-bar" class="h-full bg-blue-600 transition-all duration-300 shimmer" style="width: 0%"></div></div>
+    </div>
+
+    <!-- FULL SCREEN READER -->
+    <div id="view-reader" class="hidden fixed inset-0 z-[50] bg-white flex flex-col animate-fade-in">
+        <header class="glass-header px-6 h-16 flex items-center justify-between flex-shrink-0 z-20">
+            <div class="flex items-center gap-4 w-full overflow-hidden">
+                <button onclick="goBack()" class="flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors group">
+                    <div class="p-1.5 rounded-full group-hover:bg-slate-100 transition-colors"><i data-lucide="arrow-left" class="w-5 h-5"></i></div>
+                    <span class="text-sm font-semibold">Back</span>
+                </button>
+                <div class="h-6 w-px bg-slate-200"></div>
+                <h1 id="reader-project-title" class="text-lg font-bold text-slate-900 truncate flex-1">Project Title</h1>
+            </div>
+            <div class="flex-shrink-0 ml-4">
+                <button id="btn-edit-doc" onclick="editCurrentDoc()" class="hidden px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-colors"><i data-lucide="edit-3" class="w-3 h-3"></i> Edit</button>
+            </div>
+        </header>
+
+        <div class="flex-grow flex overflow-hidden">
+            <aside class="w-72 border-r border-slate-200 bg-slate-50/80 flex-shrink-0 overflow-y-auto p-4 hidden md:block">
+                <div class="mb-8 mt-2">
+                    <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest block mb-3 px-2">Table of Contents</span>
+                    <div id="reader-page-list" class="space-y-1"></div>
+                </div>
+            </aside>
+
+            <div class="flex-grow bg-slate-50 overflow-y-auto custom-scrollbar scroll-smooth">
+                <div class="max-w-3xl mx-auto py-16 px-8 animate-fade-in-up">
+                    <div class="mb-10">
+                        <!-- Author Section in Reader -->
+                         <div class="flex items-center gap-3 mb-4 cursor-pointer hover:bg-white/50 p-2 -ml-2 rounded-xl transition-all w-fit" id="reader-author-link">
+                            <div id="reader-author-img-container" class="w-10 h-10 flex-shrink-0"></div>
+                            <div class="overflow-hidden">
+                                <p class="text-sm font-bold text-slate-900 truncate" id="reader-author-name">Author</p>
+                                <p class="text-[10px] text-slate-500 font-medium" id="reader-date">Date</p>
+                            </div>
+                        </div>
+                        <h1 id="reader-page-title" class="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-tight">Page Title</h1>
+                    </div>
+                    
+                    <div id="reader-content-area" class="space-y-6 pb-32"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE MODAL -->
+    <div id="profile-modal" class="hidden fixed inset-0 z-[60] overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4">
+            <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity" onclick="hideProfileModal()"></div>
+            <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md relative z-10 animate-pop-in">
+                <h3 class="text-2xl font-bold mb-6 text-slate-900">Edit Profile</h3>
+                <form id="profile-form" class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Display Name</label>
+                        <input type="text" id="profile-name" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-blue-500 focus:bg-white outline-none transition-all" placeholder="Display Name">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Profile Picture</label>
+                        <div class="flex items-center gap-4">
+                             <div id="modal-current-avatar" class="w-16 h-16 rounded-full bg-slate-100 flex-shrink-0 border border-slate-200"></div>
+                             <input type="file" id="profile-file-input" class="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-bold file:uppercase file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 transition-colors" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-3 mt-8">
+                        <button type="button" onclick="hideProfileModal()" class="px-5 py-2.5 rounded-xl text-slate-600 font-medium hover:bg-slate-100 transition-colors">Cancel</button>
+                        <button type="submit" class="px-5 py-2.5 bg-slate-900 text-white rounded-xl font-semibold shadow-lg shadow-slate-900/20 hover:shadow-slate-900/30 active:scale-95 transition-all">Save Changes</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyAOTYlkoP3osB2FAJJlw6aP0hQ_BAx137Y",
+            authDomain: "documentation-22dcd.firebaseapp.com",
+            projectId: "documentation-22dcd",
+            storageBucket: "documentation-22dcd.firebasestorage.app",
+            messagingSenderId: "336329110932",
+            appId: "1:336329110932:web:4e6ba0d06dae4c8582cb81",
+            measurementId: "G-LTBHCPE66G"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        lucide.createIcons();
+
+        // --- STATE ---
+        let currentUser = null;
+        let previousView = 'feed';
+        let currentDetailDoc = null;
+        let imageInputMode = 'upload';
+        
+        let currentProjectPages = []; 
+        let activePageId = null;
+
+        let cachedPublicDocs = [];
+        let cachedProfileDocs = [];
+        let cachedSharedDocs = [];
+
+        // --- UTILS & HELPERS ---
+        
+        // Robust Avatar Generator
+        function getAvatar(userOrData, sizeClass = "w-10 h-10") {
+            const colors = ['bg-red-500', 'bg-orange-500', 'bg-amber-500', 'bg-green-500', 'bg-emerald-500', 'bg-teal-500', 'bg-cyan-500', 'bg-blue-500', 'bg-indigo-500', 'bg-violet-500', 'bg-purple-500', 'bg-fuchsia-500', 'bg-pink-500', 'bg-rose-500'];
+            
+            let name = "User";
+            let photoURL = null;
+
+            if (userOrData) {
+                // Check if it's a firebase user object or data object
+                name = userOrData.displayName || userOrData.authorName || userOrData.name || "User";
+                photoURL = userOrData.photoURL || userOrData.authorPhoto;
+            }
+
+            if (photoURL) {
+                // Return image tag with fallback to initials div on error
+                return `<img src="${photoURL}" class="${sizeClass} rounded-full object-cover border border-slate-200 shadow-sm" alt="${name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                        <div class="${sizeClass} rounded-full ${colors[name.length % colors.length]} avatar-placeholder shadow-sm border border-white/20 hidden text-[10px] sm:text-xs">${getInitials(name)}</div>`;
+            } else {
+                // Return initials div
+                const colorClass = colors[name.length % colors.length];
+                return `<div class="${sizeClass} rounded-full ${colorClass} avatar-placeholder shadow-sm border border-white/20 text-[10px] sm:text-xs">${getInitials(name)}</div>`;
+            }
+        }
+
+        function getInitials(name) {
+            if (!name) return "??";
+            const parts = name.split(' ');
+            if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+            return name.substring(0, 2).toUpperCase();
+        }
+
+        function showToast(message, type = 'error') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = type === 'success' ? 'bg-emerald-500 text-white shadow-emerald-500/30' : 'bg-red-500 text-white shadow-red-500/30';
+            const icon = type === 'success' ? '<i data-lucide="check-circle" class="w-5 h-5"></i>' : '<i data-lucide="alert-circle" class="w-5 h-5"></i>';
+            
+            toast.className = `flex items-center gap-3 px-5 py-4 rounded-xl shadow-lg pointer-events-auto animate-slide-in-right ${colors} backdrop-blur-sm`;
+            toast.innerHTML = `${icon}<span class="text-sm font-semibold tracking-wide">${message}</span>`;
+            
+            container.appendChild(toast);
+            lucide.createIcons();
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)';
+                setTimeout(() => toast.remove(), 400);
+            }, 3000);
+        }
+
+        // --- HELPER FUNCTIONS FOR READER & EDITOR ---
+        function renderReaderSidebar() {
+            const list = document.getElementById('reader-page-list');
+            list.innerHTML = '';
+            currentProjectPages.forEach(page => {
+                const btn = document.createElement('button');
+                btn.className = "page-item w-full text-left px-3 py-2.5 text-xs font-medium text-slate-500 hover:text-slate-900 rounded-lg mb-1 truncate transition-all";
+                btn.id = `reader-nav-${page.id}`;
+                btn.textContent = page.title;
+                btn.onclick = () => loadReaderPage(page.id);
+                list.appendChild(btn);
+            });
+        }
+
+        function loadReaderPage(pageId) {
+            const page = currentProjectPages.find(p => p.id === pageId);
+            if(!page) return;
+
+            // Update UI
+            document.querySelectorAll('.page-item').forEach(el => el.classList.remove('active'));
+            const activeNav = document.getElementById(`reader-nav-${pageId}`);
+            if(activeNav) activeNav.classList.add('active');
+            
+            const titleEl = document.getElementById('reader-page-title');
+            titleEl.textContent = page.title;
+            // Re-trigger animation
+            titleEl.classList.remove('animate-fade-in-up');
+            void titleEl.offsetWidth; // Trigger reflow
+            titleEl.classList.add('animate-fade-in-up');
+
+            const contentContainer = document.getElementById('reader-content-area');
+            contentContainer.style.opacity = '0';
+            setTimeout(() => {
+                renderContentToContainer(contentContainer, page.content);
+                contentContainer.style.transition = 'opacity 0.3s ease';
+                contentContainer.style.opacity = '1';
+            }, 100);
+        }
+
+        function getReaderItemHTML(type, content, language) {
+            if (type === 'heading') return `<h2 class="text-2xl font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4">${content}</h2>`;
+            if (type === 'text') return `<div class="markdown-body text-slate-600 leading-relaxed mb-4">${DOMPurify.sanitize(marked.parse(content))}</div>`;
+            if (type === 'code') return `<div class="relative group mb-4"><div class="absolute right-2 top-2 px-2 py-1 bg-white/10 rounded text-[10px] text-slate-400 font-mono uppercase">${language}</div><pre class="bg-slate-900 text-slate-100 p-5 rounded-xl overflow-x-auto shadow-inner ring-1 ring-white/10"><code class="language-${language}">${content}</code></pre></div>`;
+            if (type === 'image') return `<figure class="mb-4"><img src="${content}" class="w-full h-auto rounded-lg" alt="Image"></figure>`;
+            if (type === 'callout') return `<div class="flex gap-4 bg-blue-50/50 border border-blue-100 p-4 rounded-lg mb-4"><i data-lucide="info" class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5"></i><p class="text-blue-900 text-sm font-medium leading-relaxed">${content}</p></div>`;
+            return '';
+        }
+
+        function renderContentToContainer(container, content) {
+            container.innerHTML = '';
+            let blocks = [];
+            try { blocks = JSON.parse(content); if (!Array.isArray(blocks)) throw new Error(); } 
+            catch(e) { container.innerHTML = `<div class="markdown-body p-6 bg-white border border-slate-200 rounded-xl shadow-sm">${DOMPurify.sanitize(marked.parse(content))}</div>`; hljs.highlightAll(); return; }
+            
+            blocks.forEach((block, index) => {
+                if(block.type === 'empty') return;
+                
+                const div = document.createElement('div');
+                div.className = "mb-4 animate-fade-in-up bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:border-slate-300 hover:shadow-md transition-all duration-300"; 
+                div.style.animationDelay = `${index * 50}ms`; 
+                
+                let innerHTML = '';
+                if (block.type === 'section' && Array.isArray(block.children)) {
+                    block.children.forEach(child => {
+                        innerHTML += getReaderItemHTML(child.type, child.content, child.language);
+                    });
+                } else {
+                    innerHTML = getReaderItemHTML(block.type, block.content, block.language);
+                }
+                
+                div.innerHTML = innerHTML;
+                container.appendChild(div);
+            });
+            hljs.highlightAll(); lucide.createIcons();
+        }
+
+        // --- NAVIGATION & VIEWS ---
+        function navigateTo(viewId, viewUserId = null) {
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            const activeNav = document.getElementById(`nav-${viewId}`);
+            if(activeNav) activeNav.classList.add('active');
+
+            if (['feed', 'dashboard', 'profile'].includes(viewId)) {
+                previousView = viewId;
+                document.getElementById('global-search').value = '';
+                handleSearch('');
+            }
+
+            const views = ['feed', 'dashboard', 'profile', 'editor', 'reader'];
+            views.forEach(v => document.getElementById(`view-${v}`).classList.add('hidden'));
+            
+            const nextView = document.getElementById(`view-${viewId}`);
+            nextView.classList.remove('hidden');
+            
+            // Re-trigger view animations
+            nextView.classList.remove('animate-fade-in');
+            void nextView.offsetWidth;
+            nextView.classList.add('animate-fade-in');
+
+            if(document.getElementById('main-scroll-area')) document.getElementById('main-scroll-area').scrollTop = 0;
+
+            if(viewId === 'feed') loadPublicDocs();
+            if(viewId === 'dashboard') loadSharedDocs();
+            if(viewId === 'profile') loadProfileDocs(viewUserId);
+        }
+
+        function goBack() { navigateTo(previousView); }
+
+        // --- AUTH ---
+        auth.onAuthStateChanged(user => {
+            currentUser = user;
+            const loader = document.getElementById('global-loader');
+            if (user) {
+                document.getElementById('auth-container').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('hidden');
+                document.getElementById('app-wrapper').classList.add('flex');
+                updateUserUI(user);
+                navigateTo('feed');
+            } else {
+                document.getElementById('auth-container').classList.remove('hidden');
+                document.getElementById('app-wrapper').classList.add('hidden');
+                document.getElementById('app-wrapper').classList.remove('flex');
+            }
+            // Smooth loader exit
+            loader.style.opacity = '0';
+            setTimeout(() => loader.classList.add('hidden'), 500);
+        });
+
+        function updateUserUI(user) {
+            const name = user.displayName || user.email.split('@')[0];
+            // Sidebar Update
+            document.getElementById('sidebar-user-name').textContent = name;
+            document.getElementById('sidebar-user-avatar').innerHTML = getAvatar(user, "w-10 h-10");
+        }
+
+        // --- SEARCH ---
+        function handleSearch(query) {
+            const lowerQuery = query.toLowerCase();
+            const currentView = previousView;
+            let dataToFilter = [], containerId = '', emptyId = '';
+
+            if (currentView === 'feed') { dataToFilter = cachedPublicDocs; containerId = 'public-docs-grid'; emptyId = 'public-empty'; }
+            else if (currentView === 'profile') { dataToFilter = cachedProfileDocs; containerId = 'profile-docs-grid'; emptyId = 'profile-empty'; }
+            else if (currentView === 'dashboard') { dataToFilter = cachedSharedDocs; containerId = 'dash-content-shared'; emptyId = 'dash-empty'; }
+
+            const filtered = dataToFilter.filter(doc => (doc.title && doc.title.toLowerCase().includes(lowerQuery)) || (doc.category && doc.category.toLowerCase().includes(lowerQuery)));
+            const isMyProfile = currentView === 'profile' && (!document.getElementById('profile-edit-btn').classList.contains('hidden'));
+            renderDocs(filtered, containerId, emptyId, isMyProfile);
+        }
+
+        function renderDocs(docs, containerId, emptyId, allowDelete = false) {
+            const container = document.getElementById(containerId);
+            const empty = document.getElementById(emptyId);
+            container.innerHTML = '';
+            if (docs.length === 0) { if (empty) empty.classList.remove('hidden'); if (empty && containerId === 'public-docs-grid') empty.classList.add('flex'); } 
+            else { 
+                if (empty) empty.classList.add('hidden'); if (empty) empty.classList.remove('flex'); 
+                docs.forEach((doc, idx) => {
+                    const card = createDocCard(doc, allowDelete);
+                    card.style.animationDelay = `${idx * 50}ms`; // Stagger
+                    card.classList.add('animate-fade-in-up');
+                    container.appendChild(card); 
+                }); 
+            }
+            lucide.createIcons();
+        }
+
+        // --- EDITOR ---
+        function startNewDoc() {
+            document.getElementById('edit-doc-id').value = '';
+            document.getElementById('doc-title').value = '';
+            document.getElementById('upload-btn').textContent = "Save Changes";
+            document.getElementById('editor-settings-form').reset();
+            const pageId = 'pg-' + Date.now();
+            currentProjectPages = [{ id: pageId, title: 'Introduction', content: JSON.stringify([{type:'text', content:''}]) }];
+            activePageId = pageId;
+            renderEditorPageList();
+            loadPageIntoEditor(pageId);
+            setImageMode('upload');
+            
+            // Editor transition setup
+            const editorView = document.getElementById('view-editor');
+            editorView.classList.remove('hidden');
+            editorView.classList.remove('animate-pop-in');
+            void editorView.offsetWidth;
+            editorView.classList.add('animate-pop-in');
+            
+            navigateTo('editor');
+        }
+
+        function editCurrentDoc() {
+            const data = currentDetailDoc;
+            document.getElementById('edit-doc-id').value = data.id;
+            document.getElementById('doc-title').value = data.title;
+            document.getElementById('doc-category').value = data.category;
+            document.getElementById('doc-visibility').value = data.visibility || 'public';
+            if(data.sharedWith) document.getElementById('doc-shared-with').value = data.sharedWith.join(', ');
+            document.getElementById('doc-image-url').value = data.imageUrl || '';
+
+            if (data.pages && Array.isArray(data.pages)) currentProjectPages = data.pages;
+            else currentProjectPages = [{ id: 'pg-home', title: 'Home', content: data.content }];
+
+            activePageId = currentProjectPages[0].id;
+            renderEditorPageList();
+            loadPageIntoEditor(activePageId);
+            
+            if(data.imageUrl && !data.imageUrl.includes('firebasestorage')) setImageMode('url');
+            else setImageMode('upload');
+
+            toggleShareField();
+            navigateTo('editor');
+        }
+
+        function addPage() {
+            const id = 'pg-' + Date.now();
+            currentProjectPages.push({ id: id, title: 'New Page', content: '[]' });
+            renderEditorPageList();
+            switchEditorPage(id);
+        }
+
+        function deletePage(e, id) {
+            e.stopPropagation();
+            if (currentProjectPages.length <= 1) return showToast("Project must have at least one page.");
+            if (!confirm("Delete this page?")) return;
+            currentProjectPages = currentProjectPages.filter(p => p.id !== id);
+            if (activePageId === id) switchEditorPage(currentProjectPages[0].id);
+            else renderEditorPageList();
+        }
+
+        function switchEditorPage(id) {
+            saveCurrentPageToMemory();
+            activePageId = id;
+            loadPageIntoEditor(id);
+            renderEditorPageList();
+        }
+
+        function saveCurrentPageToMemory() {
+            const currentContent = getEditorContent();
+            const currentTitle = document.getElementById('current-page-title').value;
+            const pageIndex = currentProjectPages.findIndex(p => p.id === activePageId);
+            if (pageIndex > -1) {
+                currentProjectPages[pageIndex].content = currentContent;
+                currentProjectPages[pageIndex].title = currentTitle;
+            }
+        }
+
+        function loadPageIntoEditor(id) {
+            const page = currentProjectPages.find(p => p.id === id);
+            if (!page) return;
+            document.getElementById('current-page-title').value = page.title;
+            const container = document.getElementById('editor-blocks-container');
+            container.innerHTML = '';
+            try {
+                const blocks = JSON.parse(page.content);
+                if (Array.isArray(blocks) && blocks.length > 0) {
+                     blocks.forEach(b => {
+                         if (b.type === 'section') addBlock(b);
+                         else addBlock({ type: 'section', children: [b] });
+                     });
+                }
+                else addBlock();
+            } catch (e) { addBlock({ type: 'section', children: [{type:'text', content: page.content}] }); }
+        }
+
+        function updatePageTitle(val) {
+            const page = currentProjectPages.find(p => p.id === activePageId);
+            if (page) { page.title = val; renderEditorPageList(); }
+        }
+
+        function renderEditorPageList() {
+            const list = document.getElementById('editor-page-list');
+            list.innerHTML = '';
+            currentProjectPages.forEach(page => {
+                const isActive = page.id === activePageId;
+                const div = document.createElement('div');
+                div.className = `flex justify-between items-center px-3 py-2.5 rounded-lg cursor-pointer text-xs transition-all ${isActive ? 'bg-white shadow-sm text-slate-900 font-bold border-l-4 border-slate-900' : 'text-slate-500 hover:bg-slate-200/50 hover:text-slate-700 font-medium'}`;
+                div.onclick = () => switchEditorPage(page.id);
+                div.innerHTML = `<span class="truncate">${page.title || 'Untitled'}</span>${currentProjectPages.length > 1 ? `<button onclick="deletePage(event, '${page.id}')" class="text-slate-300 hover:text-red-500 ml-2 transition-colors"><i data-lucide="trash" class="w-3 h-3"></i></button>` : ''}`;
+                list.appendChild(div);
+            });
+            lucide.createIcons();
+        }
+
+        // --- BLOCK EDITOR CORE ---
+        
+        function addBlock(data = null) {
+            const container = document.getElementById('editor-blocks-container');
+            const blockDiv = document.createElement('div');
+            blockDiv.className = "block-item bg-white border border-slate-200 hover:border-slate-300 hover:shadow-md rounded-xl p-4 md:p-6 -mx-2 md:mx-0 group transition-all duration-200 relative animate-fade-in-up";
+            blockDiv.dataset.type = 'section';
+
+            // Block Controls
+            const controls = document.createElement('div');
+            controls.className = "block-controls absolute right-2 top-2 flex bg-white border border-slate-200 rounded-lg shadow-sm z-10 scale-90";
+            controls.innerHTML = `<button type="button" onclick="moveBlock(this, -1)" class="p-1.5 hover:bg-slate-50 text-slate-400 rounded-l-lg transition-colors"><i data-lucide="chevron-up" class="w-3.5 h-3.5"></i></button><div class="w-px bg-slate-100"></div><button type="button" onclick="moveBlock(this, 1)" class="p-1.5 hover:bg-slate-50 text-slate-400 transition-colors"><i data-lucide="chevron-down" class="w-3.5 h-3.5"></i></button><div class="w-px bg-slate-100"></div><button type="button" onclick="deleteBlock(this)" class="p-1.5 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-r-lg transition-colors"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>`;
+            blockDiv.appendChild(controls);
+
+            // Rows Container
+            const rowsContainer = document.createElement('div');
+            rowsContainer.className = "rows-container space-y-3";
+            blockDiv.appendChild(rowsContainer);
+
+            // Add Row Buttons
+            const addRowDiv = document.createElement('div');
+            addRowDiv.className = "mt-4 pt-4 border-t border-dashed border-slate-100 flex flex-wrap gap-2 transition-opacity"; 
+            
+            const types = [
+                {id:'text', icon:'type', label:'Text'},
+                {id:'heading', icon:'heading', label:'Heading'},
+                {id:'code', icon:'code', label:'Code'},
+                {id:'image', icon:'image', label:'Image'},
+                {id:'callout', icon:'alert-circle', label:'Callout'}
+            ];
+            
+            types.forEach(t => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-blue-600 text-xs font-bold transition-all border border-transparent hover:border-slate-200";
+                btn.innerHTML = `<i data-lucide="${t.icon}" class="w-3.5 h-3.5"></i> ${t.label}`;
+                btn.onclick = () => addBlockRow(rowsContainer, t.id, '', 'javascript');
+                addRowDiv.appendChild(btn);
+            });
+            
+            blockDiv.appendChild(addRowDiv);
+            container.appendChild(blockDiv);
+
+            // Populate Children
+            if (data && data.children && Array.isArray(data.children)) {
+                data.children.forEach(child => addBlockRow(rowsContainer, child.type, child.content, child.language));
+            } else {
+                addBlockRow(rowsContainer, 'text', '', 'javascript');
+            }
+
+            lucide.createIcons();
+            if (!data) blockDiv.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function addBlockRow(container, type, content = '', language = 'javascript') {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = "content-row relative group/row animate-fade-in";
+            rowDiv.dataset.type = type;
+
+            const delBtn = document.createElement('button');
+            delBtn.className = "absolute -left-8 top-1.5 p-1 text-slate-300 hover:text-red-500 opacity-0 group-hover/row:opacity-100 transition-opacity";
+            delBtn.innerHTML = `<i data-lucide="x" class="w-3.5 h-3.5"></i>`;
+            delBtn.onclick = () => rowDiv.remove();
+            rowDiv.appendChild(delBtn);
+
+            const wrapper = document.createElement('div');
+            wrapper.className = "w-full";
+            rowDiv.appendChild(wrapper);
+
+            if (type === 'heading') {
+                const input = document.createElement('input'); input.type = 'text'; input.className = 'block-input w-full text-2xl font-bold text-slate-800 outline-none placeholder-slate-300 bg-transparent border-none p-0 focus:ring-0'; input.placeholder = 'Heading...'; input.value = content; wrapper.appendChild(input);
+            } else if (type === 'text') {
+                const textarea = document.createElement('textarea'); textarea.rows = 1; textarea.className = 'block-input w-full text-lg text-slate-600 outline-none resize-none placeholder-slate-300 bg-transparent leading-relaxed border-none p-0 focus:ring-0'; textarea.placeholder = "Start writing..."; textarea.value = content; 
+                textarea.oninput = function() { this.style.height=''; this.style.height=this.scrollHeight+'px'; }; 
+                wrapper.appendChild(textarea); setTimeout(() => { textarea.style.height = textarea.scrollHeight + 'px'; }, 0);
+            } else if (type === 'code') {
+                const codeWrapper = document.createElement('div'); codeWrapper.className = "bg-slate-900 rounded-xl p-1 font-mono text-sm relative group-code shadow-lg ring-1 ring-slate-900/5";
+                const header = document.createElement('div'); header.className="flex justify-between items-center px-4 py-2 border-b border-slate-800";
+                const dots = `<div class="flex gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-red-500/50"></div><div class="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div><div class="w-2.5 h-2.5 rounded-full bg-green-500/50"></div></div>`;
+                const select = document.createElement('select'); select.className = "block-lang bg-transparent text-slate-400 text-xs rounded outline-none cursor-pointer hover:text-white transition-colors uppercase font-bold tracking-wider"; select.innerHTML = `<option value="javascript" ${language==='javascript'?'selected':''}>JS</option><option value="html" ${language==='html'?'selected':''}>HTML</option><option value="python" ${language==='python'?'selected':''}>PYTHON</option>`;
+                header.innerHTML = dots; header.appendChild(select); codeWrapper.appendChild(header);
+                const textarea = document.createElement('textarea'); textarea.rows = 4; textarea.className = "block-input w-full bg-transparent text-slate-200 outline-none resize-none placeholder-slate-600 p-4 border-none focus:ring-0"; textarea.placeholder = "// Write your code here..."; textarea.value = content; codeWrapper.appendChild(textarea); wrapper.appendChild(codeWrapper);
+            } else if (type === 'image') {
+                const imgWrapper = document.createElement('div'); imgWrapper.className = "flex flex-col gap-3 p-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50";
+                const input = document.createElement('input'); input.type = "url"; input.className = "block-input w-full text-xs bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors"; input.placeholder = "Paste image URL..."; input.value = content; imgWrapper.appendChild(input);
+                if (content) { const img = document.createElement('img'); img.src = content; img.className = "max-h-80 object-contain rounded-lg shadow-sm bg-white"; imgWrapper.appendChild(img); }
+                input.onchange = () => { const oldImg = imgWrapper.querySelector('img'); if(oldImg) oldImg.remove(); if(input.value){ const img = document.createElement('img'); img.src = input.value; img.className = "max-h-80 object-contain rounded-lg shadow-sm bg-white"; imgWrapper.appendChild(img); }};
+                wrapper.appendChild(imgWrapper);
+            } else if (type === 'callout') {
+                const calloutWrapper = document.createElement('div'); calloutWrapper.className = "flex gap-4 bg-blue-50/50 border border-blue-100 p-4 rounded-xl shadow-sm"; calloutWrapper.innerHTML = `<div class="text-blue-500 pt-1"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>`;
+                const textarea = document.createElement('textarea'); textarea.rows = 1; textarea.className = "block-input w-full bg-transparent text-slate-700 outline-none resize-none placeholder-blue-300 border-none p-0 focus:ring-0"; textarea.placeholder = "Information text..."; textarea.value = content; textarea.oninput = function() { this.style.height=''; this.style.height=this.scrollHeight+'px'; }; calloutWrapper.appendChild(textarea); wrapper.appendChild(calloutWrapper);
+            }
+            
+            container.appendChild(rowDiv);
+            const inp = wrapper.querySelector('.block-input'); if(inp && !content) inp.focus();
+            lucide.createIcons();
+        }
+
+        function deleteBlock(btn) { 
+            const item = btn.closest('.block-item');
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.95)';
+            setTimeout(() => item.remove(), 200);
+        }
+        function moveBlock(btn, dir) { const block = btn.closest('.block-item'); if (dir === -1 && block.previousElementSibling) block.parentNode.insertBefore(block, block.previousElementSibling); else if (dir === 1 && block.nextElementSibling) block.parentNode.insertBefore(block.nextElementSibling, block); }
+        function getEditorContent() { 
+            const blocks = []; 
+            document.querySelectorAll('#editor-blocks-container .block-item').forEach(blockEl => { 
+                const rows = [];
+                blockEl.querySelectorAll('.content-row').forEach(rowEl => {
+                    const type = rowEl.dataset.type;
+                    const input = rowEl.querySelector('.block-input');
+                    const lang = rowEl.querySelector('.block-lang');
+                    if (type) {
+                        rows.push({ type, content: input ? input.value : '', language: lang ? lang.value : null });
+                    }
+                });
+                if (rows.length > 0) blocks.push({ type: 'section', children: rows });
+            }); 
+            return JSON.stringify(blocks); 
+        }
+
+        // --- READER ---
+        function openDocDetail(data) {
+            currentDetailDoc = data;
+            if (data.pages && Array.isArray(data.pages)) currentProjectPages = data.pages;
+            else currentProjectPages = [{ id: 'pg-home', title: 'Home', content: data.content }];
+            
+            document.getElementById('reader-project-title').textContent = data.title;
+            document.getElementById('reader-author-name').textContent = data.authorName || 'Unknown';
+            document.getElementById('reader-author-img-container').innerHTML = getAvatar(data, "w-10 h-10");
+            document.getElementById('reader-date').textContent = data.createdAt ? new Date(data.createdAt.seconds * 1000).toLocaleDateString(undefined, {year:'numeric', month:'long', day:'numeric'}) : '';
+
+            // Author Link for Profile
+            const authorLink = document.getElementById('reader-author-link');
+            authorLink.onclick = () => {
+                navigateTo('profile', data.authorId); 
+                if(data.authorId !== currentUser.uid) {
+                    document.getElementById('profile-page-name').textContent = data.authorName;
+                    document.getElementById('profile-page-email').textContent = "Contributor"; 
+                    document.getElementById('profile-page-avatar').innerHTML = getAvatar(data, "w-32 h-32 text-4xl");
+                }
+            };
+
+            const editBtn = document.getElementById('btn-edit-doc');
+            if(currentUser && data.authorId === currentUser.uid) editBtn.classList.remove('hidden'); else editBtn.classList.add('hidden');
+
+            renderReaderSidebar();
+            loadReaderPage(currentProjectPages[0].id);
+            navigateTo('reader');
+        }
+
+        // --- DATA ---
+        function loadPublicDocs() {
+            db.collection('lumidocs').orderBy('createdAt', 'desc').limit(50).onSnapshot(snap => {
+                cachedPublicDocs = [];
+                snap.forEach(doc => { if(doc.data().visibility === 'public') cachedPublicDocs.push({...doc.data(), id: doc.id}); });
+                if(!document.getElementById('global-search').value) renderDocs(cachedPublicDocs, 'public-docs-grid', 'public-empty');
+            });
+        }
+
+        // Updated loadProfileDocs to handle other users
+        function loadProfileDocs(targetUserId = null) {
+            const uid = targetUserId || currentUser.uid;
+            const isMe = (uid === currentUser.uid);
+            
+            const editBtn = document.getElementById('profile-edit-btn');
+            const newBtn = document.getElementById('profile-new-btn');
+            const sectionTitle = document.getElementById('profile-section-title');
+            
+            if(isMe) {
+                editBtn.classList.remove('hidden');
+                newBtn.classList.remove('hidden');
+                sectionTitle.innerHTML = `<i data-lucide="folder-open" class="w-6 h-6 text-slate-400"></i> My Projects`;
+                updateUserUI(currentUser); // Ensure my header is correct
+                // Update profile modal pic
+                document.getElementById('modal-current-avatar').innerHTML = getAvatar(currentUser, "w-16 h-16");
+                document.getElementById('profile-page-avatar').innerHTML = getAvatar(currentUser, "w-32 h-32 text-4xl");
+                document.getElementById('profile-page-name').textContent = currentUser.displayName || "User";
+                document.getElementById('profile-page-email').textContent = currentUser.email;
+
+            } else {
+                editBtn.classList.add('hidden');
+                newBtn.classList.add('hidden');
+                sectionTitle.innerHTML = `<i data-lucide="folder-open" class="w-6 h-6 text-slate-400"></i> Public Projects`;
+            }
+
+            db.collection('lumidocs').where('authorId', '==', uid).onSnapshot(snapshot => {
+                cachedProfileDocs = [];
+                snapshot.forEach(doc => { 
+                    const data = doc.data();
+                    if(isMe || data.visibility === 'public') {
+                        cachedProfileDocs.push({...data, id: doc.id});
+                    }
+                });
+                
+                cachedProfileDocs.sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+                document.getElementById('profile-total-docs').textContent = cachedProfileDocs.length;
+                
+                if(!document.getElementById('global-search').value) {
+                    renderDocs(cachedProfileDocs, 'profile-docs-grid', 'profile-empty', isMe); 
+                }
+            });
+        }
+
+        function loadSharedDocs() {
+            db.collection('lumidocs').where('sharedWith', 'array-contains', currentUser.email).get().then(snap => {
+                cachedSharedDocs = [];
+                snap.forEach(doc => cachedSharedDocs.push({...doc.data(), id: doc.id}));
+                document.getElementById('stat-shared-docs').textContent = cachedSharedDocs.length;
+                if(!document.getElementById('global-search').value) renderDocs(cachedSharedDocs, 'dash-content-shared', 'dash-empty');
+            });
+        }
+
+        function createDocCard(data, allowDelete = false) {
+            const card = document.createElement('div');
+            card.className = "bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 overflow-hidden cursor-pointer group flex flex-col h-full relative";
+            
+            card.onclick = (e) => {
+                if(e.target.closest('.delete-btn') || e.target.closest('.author-link')) return;
+                openDocDetail(data);
+            };
+
+            const date = data.createdAt ? new Date(data.createdAt.seconds*1000).toLocaleDateString() : '';
+            const imgHtml = data.imageUrl ? `<div class="h-44 overflow-hidden bg-slate-100 relative"><img src="${data.imageUrl}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"></div>` : `<div class="h-44 overflow-hidden bg-gradient-to-br from-slate-50 to-slate-200/50 flex items-center justify-center relative"><i data-lucide="file-text" class="w-12 h-12 text-slate-300/80 group-hover:scale-110 transition-transform duration-500"></i></div>`;
+            const visBadge = `<span class="absolute top-3 right-3 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide rounded-lg ${data.visibility==='public'?'text-emerald-600 bg-emerald-50 backdrop-blur-sm':'text-blue-600 bg-blue-50 backdrop-blur-sm'} shadow-sm z-10">${data.visibility}</span>`;
+            
+            const delBtn = allowDelete ? `<button onclick="deleteDoc('${data.id}')" class="delete-btn absolute top-3 left-3 p-2 bg-white/90 backdrop-blur rounded-full text-slate-400 hover:text-red-500 hover:bg-red-50 shadow-sm transition-all z-20 opacity-0 group-hover:opacity-100 transform -translate-y-2 group-hover:translate-y-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>` : '';
+
+            let preview = '';
+            try { 
+                const pages = data.pages || [{content: data.content}];
+                const blocks = JSON.parse(pages[0].content);
+                // Try to find first text content, handle sections
+                const firstSection = blocks.find(b => b.type === 'section' || b.type === 'text');
+                if (firstSection && firstSection.type === 'section') {
+                    preview = firstSection.children.find(c => c.type === 'text')?.content || 'No description available';
+                } else {
+                    preview = firstSection?.content || 'No description available';
+                }
+            } catch(e) { preview = data.content || ''; }
+            preview = preview.replace(/[#*_`]/g, '').substring(0, 90) + '...';
+
+            // Generate Avatar HTML using helper
+            const avatarHtml = getAvatar(data, "w-8 h-8");
+
+            // Revised Layout: Author at top beside Title area
+            card.innerHTML = `
+                ${visBadge}${delBtn}${imgHtml}
+                <div class="p-6 flex flex-col flex-grow">
+                    
+                    <div class="flex items-start justify-between gap-3 mb-3">
+                         <div class="flex-1 min-w-0">
+                            <span class="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-1">${data.category||'Doc'}</span>
+                            <h3 class="text-lg font-bold text-slate-900 leading-snug group-hover:text-blue-600 transition-colors truncate">${data.title}</h3>
+                         </div>
+                         <div class="flex-shrink-0 author-link" onclick="navigateTo('profile', '${data.authorId}'); if('${data.authorId}' !== '${currentUser.uid}') { document.getElementById('profile-page-name').textContent = '${data.authorName}'; document.getElementById('profile-page-avatar').innerHTML = getAvatar({authorName:'${data.authorName}', authorPhoto:'${data.authorPhoto}'}, 'w-32 h-32'); document.getElementById('profile-page-email').textContent = 'Contributor'; }" title="${data.authorName||'Unknown'}">
+                            ${avatarHtml}
+                         </div>
+                    </div>
+
+                    <p class="text-xs text-slate-500 line-clamp-3 mb-4 flex-grow leading-relaxed">${preview}</p>
+                    
+                    <div class="mt-auto pt-3 border-t border-slate-50 flex justify-between items-center">
+                        <span class="text-[10px] text-slate-400 font-medium">${date}</span>
+                        <div class="text-[10px] text-slate-400 font-bold flex items-center gap-1"><i data-lucide="eye" class="w-3 h-3"></i> View</div>
+                    </div>
+                </div>`;
+            return card;
+        }
+
+        async function deleteDoc(docId) {
+            if(!confirm("Are you sure you want to delete this project? This cannot be undone.")) return;
+            try {
+                await db.collection('lumidocs').doc(docId).delete();
+                showToast("Project deleted successfully", "success");
+            } catch(e) {
+                showToast("Error deleting project: " + e.message, "error");
+            }
+        }
+
+        async function handleUpload() {
+            const btn = document.getElementById('upload-btn');
+            const editId = document.getElementById('edit-doc-id').value;
+            saveCurrentPageToMemory();
+            const title = document.getElementById('doc-title').value;
+            const category = document.getElementById('doc-category').value;
+            const visibility = document.getElementById('doc-visibility').value;
+            const sharedWith = document.getElementById('doc-shared-with').value.split(',').map(e=>e.trim()).filter(e=>e);
+            const imageUrl = document.getElementById('doc-image-url').value;
+
+            if(!title) return showToast("Please add a Project Title");
+
+            btn.disabled = true; btn.textContent = "Saving...";
+            document.getElementById('upload-progress-container').classList.remove('hidden');
+            document.getElementById('upload-progress-bar').style.width = '70%';
+
+            const docData = { title, category, visibility, sharedWith, imageUrl, pages: currentProjectPages, updatedAt: firebase.firestore.FieldValue.serverTimestamp() };
+
+            try {
+                if (editId) await db.collection('lumidocs').doc(editId).update(docData);
+                else {
+                    docData.authorId = currentUser.uid;
+                    docData.authorName = currentUser.displayName || 'User';
+                    docData.authorEmail = currentUser.email;
+                    docData.authorPhoto = currentUser.photoURL || null;
+                    docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('lumidocs').add(docData);
+                }
+                document.getElementById('upload-progress-bar').style.width = '100%';
+                setTimeout(() => {
+                    showToast("Project saved successfully!", "success");
+                    goBack();
+                }, 300);
+            } catch (err) { showToast(err.message); } 
+            finally { 
+                setTimeout(() => {
+                    btn.disabled = false; btn.textContent = "Save Changes"; 
+                    document.getElementById('upload-progress-container').classList.add('hidden'); 
+                    document.getElementById('upload-progress-bar').style.width = '0%';
+                }, 500);
+            }
+        }
+
+        // --- AUTH & PROFILE ---
+        document.getElementById('profile-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('profile-name').value;
+            const fileInput = document.getElementById('profile-file-input');
+            let photoURL = currentUser.photoURL;
+
+            try {
+                if(fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const ref = storage.ref(`avatars/${currentUser.uid}`);
+                    await ref.put(file);
+                    photoURL = await ref.getDownloadURL();
+                }
+                
+                await currentUser.updateProfile({ displayName: name, photoURL: photoURL });
+                updateUserUI(currentUser);
+                hideProfileModal();
+                showToast("Profile updated successfully!", "success");
+            } catch(err) { showToast(err.message); }
+        });
+
+        // Auth Forms with Toast
+        document.getElementById('login-form').addEventListener('submit', async (e) => { e.preventDefault(); try { await auth.signInWithEmailAndPassword(document.getElementById('login-email').value, document.getElementById('login-password').value); } catch (err) { showToast(err.message); } });
+        document.getElementById('signup-form').addEventListener('submit', async (e) => { e.preventDefault(); try { await auth.createUserWithEmailAndPassword(document.getElementById('signup-email').value, document.getElementById('signup-password').value); } catch (err) { showToast(err.message); } });
+        document.getElementById('forgot-form').addEventListener('submit', async (e) => { e.preventDefault(); try { await auth.sendPasswordResetEmail(document.getElementById('forgot-email').value); showToast("Reset link sent!", "success"); switchAuth('login'); } catch (err) { showToast(err.message); } });
+        async function handleGoogleLogin() { try { await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); } catch (err) { showToast(err.message); } }
+        
+        // Utils
+        function toggleShareField() { const v = document.getElementById('doc-visibility').value; document.getElementById('share-field-container').classList.toggle('hidden', v !== 'shared'); }
+        function switchAuth(view) { ['login', 'signup', 'forgot'].forEach(v => { document.getElementById(`${v}-view`).classList.toggle('hidden', v !== view); }); }
+        function showProfileModal() { 
+            document.getElementById('profile-modal').classList.remove('hidden'); 
+            document.getElementById('profile-name').value = currentUser.displayName || ''; 
+            document.getElementById('modal-current-avatar').innerHTML = getAvatar(currentUser, "w-16 h-16");
+        }
+        function hideProfileModal() { document.getElementById('profile-modal').classList.add('hidden'); }
+        function setImageMode(mode) {
+            imageInputMode = mode;
+            document.getElementById('btn-img-upload').className = mode === 'upload' ? "flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all bg-white shadow-sm text-slate-900" : "flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all text-slate-500 hover:text-slate-700";
+            document.getElementById('btn-img-url').className = mode === 'url' ? "flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all bg-white shadow-sm text-slate-900" : "flex-1 py-1.5 text-[10px] font-medium rounded-md transition-all text-slate-500 hover:text-slate-700";
+            document.getElementById('doc-image-file').classList.toggle('hidden', mode !== 'upload');
+            document.getElementById('lbl-img-upload').classList.toggle('hidden', mode !== 'upload');
+            document.getElementById('doc-image-url').classList.toggle('hidden', mode !== 'url');
+        }
+        function handleLogout() { auth.signOut(); window.location.reload(); }
+    </script>
+</body>
+</html>
