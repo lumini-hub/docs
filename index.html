@@ -1317,6 +1317,74 @@
             }
         }
 
+        // --- KEYBOARD SHORTCUTS ---
+        document.addEventListener('keydown', (e) => {
+            const editorView = document.getElementById('view-editor');
+            if (editorView.classList.contains('hidden')) return;
+
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const cmd = isMac ? e.metaKey : e.ctrlKey;
+
+            // Save: Cmd/Ctrl + S
+            if (cmd && e.key === 's') {
+                e.preventDefault();
+                handleUpload();
+                return;
+            }
+
+            const active = document.activeElement;
+            const isInput = active && (active.classList.contains('block-input') || active.tagName === 'TEXTAREA' || active.tagName === 'INPUT');
+
+            // Global Editor Shortcuts (when not focused on input, or for specific actions)
+            if (cmd && e.key === 'Enter') {
+                e.preventDefault();
+                if (isInput) {
+                    const container = active.closest('.rows-container');
+                    if (container) addBlockRow(container, 'text'); // Default text
+                    else addBlock();
+                } else {
+                    addBlock();
+                }
+                return;
+            }
+
+            if (!isInput) return;
+
+            // Formatting
+            if (cmd) {
+                if (e.key === 'b') { e.preventDefault(); insertMarkdown(active, '**'); }
+                if (e.key === 'i') { e.preventDefault(); insertMarkdown(active, '*'); }
+                if (e.key === 'k') { e.preventDefault(); insertMarkdown(active, '[', '](url)'); }
+                if (e.key === '`') { e.preventDefault(); insertMarkdown(active, '`'); } // Inline code
+            }
+        });
+
+        function insertMarkdown(el, wrapper, suffix) {
+            if (!el || typeof el.selectionStart !== 'number') return;
+            
+            const start = el.selectionStart;
+            const end = el.selectionEnd;
+            const text = el.value;
+            const selected = text.substring(start, end);
+            const before = text.substring(0, start);
+            const after = text.substring(end);
+            
+            const pre = wrapper;
+            const post = suffix || wrapper;
+            
+            el.value = before + pre + selected + post + after;
+            
+            if (selected.length > 0) {
+                 el.selectionStart = start;
+                 el.selectionEnd = start + pre.length + selected.length + post.length;
+            } else {
+                 el.selectionStart = el.selectionEnd = start + pre.length;
+            }
+            
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.focus();
+        }
+
         // --- AUTH & PROFILE ---
         document.getElementById('profile-form').addEventListener('submit', async (e) => {
             e.preventDefault();
