@@ -124,6 +124,10 @@
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; border: 2px solid transparent; background-clip: content-box; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background-color: #94a3b8; }
+
+        /* Lightbox transitions */
+        .lightbox-open { opacity: 1; pointer-events: auto; }
+        .lightbox-closed { opacity: 0; pointer-events: none; }
     </style>
 </head>
 <body class="min-h-screen bg-slate-50 overflow-hidden text-slate-800">
@@ -144,6 +148,16 @@
 
     <!-- Toast Container -->
     <div id="toast-container" class="fixed top-4 right-4 z-[110] flex flex-col gap-3 pointer-events-none"></div>
+
+    <!-- LIGHTBOX OVERLAY -->
+    <div id="lightbox-modal" class="fixed inset-0 z-[200] bg-slate-900/95 backdrop-blur-md flex items-center justify-center p-4 lightbox-closed transition-all duration-300" onclick="closeLightbox()">
+        <div class="absolute top-6 right-6 z-20">
+            <button class="text-white/70 hover:text-white p-2 rounded-full hover:bg-white/10 transition-colors">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
+        </div>
+        <img id="lightbox-img" src="" class="max-w-full max-h-full object-contain rounded-lg shadow-2xl scale-95 transition-transform duration-300" onclick="event.stopPropagation()">
+    </div>
 
     <!-- AUTH SECTION -->
     <div id="auth-container" class="hidden min-h-screen flex items-center justify-center p-4 overflow-y-auto bg-white/50 backdrop-blur-sm">
@@ -644,6 +658,34 @@
             }, 3000);
         }
 
+        // --- LIGHTBOX FUNCTIONS ---
+        function openLightbox(url) {
+            if(!url) return;
+            const modal = document.getElementById('lightbox-modal');
+            const img = document.getElementById('lightbox-img');
+            img.src = url;
+            modal.classList.remove('hidden');
+            // Allow display:flex to apply first
+            requestAnimationFrame(() => {
+                modal.classList.remove('lightbox-closed');
+                modal.classList.add('lightbox-open');
+                img.classList.remove('scale-95');
+                img.classList.add('scale-100');
+            });
+        }
+        function closeLightbox() {
+            const modal = document.getElementById('lightbox-modal');
+            const img = document.getElementById('lightbox-img');
+            modal.classList.remove('lightbox-open');
+            modal.classList.add('lightbox-closed');
+            img.classList.remove('scale-100');
+            img.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                img.src = '';
+            }, 300);
+        }
+
         // --- MODALS ---
         let confirmCallback = null;
         function showConfirm(title, message, callback, isDestructive = true) {
@@ -716,7 +758,45 @@
             if (type === 'heading') return `<h2 class="text-2xl font-bold text-slate-800 border-b border-slate-100 pb-2 mb-4">${content}</h2>`;
             if (type === 'text') return `<div class="markdown-body text-slate-600 leading-relaxed mb-4">${DOMPurify.sanitize(marked.parse(content))}</div>`;
             if (type === 'code') return `<div class="relative group mb-4"><div class="absolute right-2 top-2 px-2 py-1 bg-white/10 rounded text-[10px] text-slate-400 font-mono uppercase">${language}</div><pre class="bg-slate-900 text-slate-100 p-5 rounded-xl overflow-x-auto shadow-inner ring-1 ring-white/10"><code class="language-${language}">${content}</code></pre></div>`;
-            if (type === 'image') return `<figure class="mb-4"><img src="${content}" class="w-full h-auto rounded-lg" alt="Image"></figure>`;
+            
+            if (type === 'image') {
+                let images = [];
+                try {
+                    // Try to parse as JSON array (new multi-image format)
+                    if (content.trim().startsWith('[')) {
+                        images = JSON.parse(content);
+                    } else {
+                        // Legacy single image format
+                        let width = 100;
+                        let spotlight = false;
+                        if (language && typeof language === 'string' && language.includes('|')) {
+                            const parts = language.split('|');
+                            width = parseInt(parts[0]);
+                            if(isNaN(width)) width = 100;
+                            spotlight = parts[1] === 'true';
+                        }
+                        images = [{url: content, width: width, spotlight: spotlight}];
+                    }
+                } catch(e) {
+                    images = [{url: content, width: 100, spotlight: false}];
+                }
+
+                let html = '<div class="flex flex-wrap gap-4 items-start mb-6 w-full">';
+                
+                images.forEach(img => {
+                    const cursorClass = img.spotlight ? 'cursor-zoom-in' : '';
+                    const escapedUrl = img.url.replace(/'/g, "\\'");
+                    const clickAttr = img.spotlight ? `onclick="openLightbox('${escapedUrl}')"` : '';
+                    
+                    html += `<div style="width: ${img.width}%;" class="relative transition-all duration-300">
+                                <img src="${img.url}" class="w-full h-auto rounded-lg shadow-sm hover:shadow-md transition-shadow ${cursorClass}" alt="Image" ${clickAttr}>
+                             </div>`;
+                });
+                
+                html += '</div>';
+                return html;
+            }
+            
             if (type === 'callout') return `<div class="flex gap-4 bg-blue-50/50 border border-blue-100 p-4 rounded-lg mb-4"><i data-lucide="info" class="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5"></i><p class="text-blue-900 text-sm font-medium leading-relaxed">${content}</p></div>`;
             return '';
         }
@@ -985,7 +1065,7 @@
                 {id:'text', icon:'type', label:'Text'},
                 {id:'heading', icon:'heading', label:'Heading'},
                 {id:'code', icon:'code', label:'Code'},
-                {id:'image', icon:'image', label:'Image'},
+                {id:'image', icon:'image', label:'Image Gallery'},
                 {id:'callout', icon:'alert-circle', label:'Callout'}
             ];
             
@@ -1041,11 +1121,183 @@
                 header.innerHTML = dots; header.appendChild(select); codeWrapper.appendChild(header);
                 const textarea = document.createElement('textarea'); textarea.rows = 4; textarea.className = "block-input w-full bg-transparent text-slate-200 outline-none resize-none placeholder-slate-600 p-4 border-none focus:ring-0"; textarea.placeholder = "// Write your code here..."; textarea.value = content; codeWrapper.appendChild(textarea); wrapper.appendChild(codeWrapper);
             } else if (type === 'image') {
-                const imgWrapper = document.createElement('div'); imgWrapper.className = "flex flex-col gap-3 p-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50";
-                const input = document.createElement('input'); input.type = "url"; input.className = "block-input w-full text-xs bg-white border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-blue-500 transition-colors"; input.placeholder = "Paste image URL..."; input.value = content; imgWrapper.appendChild(input);
-                if (content) { const img = document.createElement('img'); img.src = content; img.className = "max-h-80 object-contain rounded-lg shadow-sm bg-white"; imgWrapper.appendChild(img); }
-                input.onchange = () => { const oldImg = imgWrapper.querySelector('img'); if(oldImg) oldImg.remove(); if(input.value){ const img = document.createElement('img'); img.src = input.value; img.className = "max-h-80 object-contain rounded-lg shadow-sm bg-white"; imgWrapper.appendChild(img); }};
-                wrapper.appendChild(imgWrapper);
+                // Initialize state
+                let images = [];
+                try {
+                    if (content.trim().startsWith('[')) {
+                        images = JSON.parse(content);
+                    } else if (content) {
+                        // Legacy single image
+                        let w = 100; let s = false;
+                        if (language && language.includes('|')) { 
+                            const p = language.split('|'); w=parseInt(p[0])||100; s=p[1]==='true';
+                        }
+                        images = [{url: content, width: w, spotlight: s}];
+                    }
+                } catch(e) { images = []; }
+
+                // Main Layout
+                const imgContainer = document.createElement('div');
+                imgContainer.className = "flex flex-col gap-4 p-4 border border-dashed border-slate-200 rounded-xl bg-slate-50/50";
+                
+                // Hidden input for persistence (hijacks block-input class)
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = "hidden";
+                hiddenInput.className = "block-input";
+                hiddenInput.value = JSON.stringify(images);
+                imgContainer.appendChild(hiddenInput);
+
+                // Visual Playground
+                const previewArea = document.createElement('div');
+                previewArea.className = "flex flex-wrap items-start gap-4 p-4 bg-white rounded-lg border border-slate-100 min-h-[120px] shadow-sm";
+                imgContainer.appendChild(previewArea);
+
+                // Add Bar
+                const addBar = document.createElement('div');
+                addBar.className = "flex gap-2 items-center bg-white p-1.5 rounded-lg border border-slate-200 shadow-sm";
+                
+                const urlInput = document.createElement('input');
+                urlInput.type = "url";
+                urlInput.className = "flex-1 text-xs bg-transparent px-3 py-2 outline-none text-slate-700 placeholder-slate-400";
+                urlInput.placeholder = "Paste image URL and press Enter...";
+                
+                const fileBtn = document.createElement('button');
+                fileBtn.type="button";
+                fileBtn.className = "p-2 hover:bg-slate-100 text-slate-500 rounded-md transition-colors relative overflow-hidden";
+                fileBtn.innerHTML = `<i data-lucide="upload-cloud" class="w-4 h-4"></i><input type="file" class="absolute inset-0 opacity-0 cursor-pointer" accept="image/*">`;
+                
+                const addBtn = document.createElement('button');
+                addBtn.type="button";
+                addBtn.className = "bg-slate-900 text-white text-xs font-bold px-4 py-2 rounded-md hover:bg-slate-800 transition-colors";
+                addBtn.textContent = "Add";
+
+                addBar.appendChild(fileBtn);
+                addBar.appendChild(urlInput);
+                addBar.appendChild(addBtn);
+                imgContainer.appendChild(addBar);
+                
+                wrapper.appendChild(imgContainer);
+
+                // --- LOGIC ---
+                const updateState = () => {
+                    hiddenInput.value = JSON.stringify(images);
+                };
+
+                const renderImages = () => {
+                    previewArea.innerHTML = '';
+                    if(images.length === 0) {
+                        previewArea.innerHTML = `<div class="w-full h-24 flex flex-col items-center justify-center text-slate-300 text-xs font-medium"><i data-lucide="image" class="w-6 h-6 mb-2 opacity-50"></i>No images yet</div>`;
+                    }
+                    
+                    images.forEach((imgData, index) => {
+                        const frame = document.createElement('div');
+                        frame.className = "relative group/frame transition-all duration-75 ease-out rounded-lg border border-slate-200 bg-slate-50";
+                        frame.style.width = `${imgData.width}%`;
+                        
+                        // Image
+                        const imgTag = document.createElement('img');
+                        imgTag.src = imgData.url;
+                        imgTag.className = "w-full h-auto rounded-lg block";
+                        
+                        // Controls Overlay
+                        const controls = document.createElement('div');
+                        controls.className = "absolute top-2 right-2 flex gap-1 opacity-0 group-hover/frame:opacity-100 transition-opacity z-10";
+                        
+                        // Spotlight Toggle
+                        const spotBtn = document.createElement('button');
+                        spotBtn.type="button";
+                        spotBtn.className = `p-1.5 rounded-md shadow-sm border border-slate-200 transition-all ${imgData.spotlight ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-400 hover:text-slate-700'}`;
+                        spotBtn.innerHTML = `<i data-lucide="maximize-2" class="w-3 h-3"></i>`;
+                        spotBtn.title = "Toggle Spotlight";
+                        spotBtn.onclick = (e) => { 
+                            e.stopPropagation(); 
+                            imgData.spotlight = !imgData.spotlight; 
+                            updateState(); renderImages(); 
+                        };
+
+                        // Delete
+                        const delBtn = document.createElement('button');
+                        delBtn.type="button";
+                        delBtn.className = "p-1.5 bg-white text-slate-400 hover:text-red-500 rounded-md shadow-sm border border-slate-200 transition-colors";
+                        delBtn.innerHTML = `<i data-lucide="x" class="w-3 h-3"></i>`;
+                        delBtn.title = "Remove";
+                        delBtn.onclick = (e) => { 
+                            e.stopPropagation();
+                            images.splice(index, 1);
+                            updateState(); renderImages();
+                        };
+
+                        controls.appendChild(spotBtn);
+                        controls.appendChild(delBtn);
+
+                        // Resize Handle
+                        const handle = document.createElement('div');
+                        handle.className = "absolute bottom-2 right-2 w-6 h-6 bg-white text-slate-500 rounded-full shadow-md border border-slate-200 flex items-center justify-center cursor-nwse-resize opacity-0 group-hover/frame:opacity-100 hover:bg-blue-50 hover:text-blue-600 z-20";
+                        handle.innerHTML = '<i data-lucide="arrow-down-right" class="w-3.5 h-3.5"></i>';
+                        
+                        // Drag Logic
+                        handle.addEventListener('mousedown', (e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const startX = e.clientX;
+                            const startWidth = frame.offsetWidth;
+                            const parentWidth = previewArea.offsetWidth;
+                            
+                            const onMouseMove = (ev) => {
+                                const dx = ev.clientX - startX;
+                                let newPct = ((startWidth + dx) / parentWidth) * 100;
+                                if(newPct < 15) newPct = 15;
+                                if(newPct > 100) newPct = 100;
+                                
+                                imgData.width = Math.round(newPct);
+                                frame.style.width = `${newPct}%`;
+                            };
+                            
+                            const onMouseUp = () => {
+                                document.removeEventListener('mousemove', onMouseMove);
+                                document.removeEventListener('mouseup', onMouseUp);
+                                updateState();
+                            };
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                        });
+
+                        frame.appendChild(imgTag);
+                        frame.appendChild(controls);
+                        frame.appendChild(handle);
+                        previewArea.appendChild(frame);
+                    });
+                    lucide.createIcons();
+                };
+
+                // Add Logic
+                const addImage = (url) => {
+                    if(!url) return;
+                    images.push({url: url, width: 48, spotlight: false}); // Default to ~half width
+                    updateState();
+                    renderImages();
+                    urlInput.value = '';
+                };
+
+                addBtn.onclick = () => addImage(urlInput.value);
+                urlInput.onkeydown = (e) => { if(e.key==='Enter'){ e.preventDefault(); addImage(urlInput.value); }};
+                
+                // File Upload
+                const fileInput = fileBtn.querySelector('input');
+                fileInput.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if(file) {
+                        try {
+                            fileBtn.classList.add('animate-pulse');
+                            const ref = storage.ref(`uploads/${Date.now()}_${file.name}`);
+                            await ref.put(file);
+                            const url = await ref.getDownloadURL();
+                            addImage(url);
+                        } catch(err) { console.error(err); showToast("Upload failed"); }
+                        finally { fileBtn.classList.remove('animate-pulse'); fileInput.value=''; }
+                    }
+                };
+
+                renderImages();
             } else if (type === 'callout') {
                 const calloutWrapper = document.createElement('div'); calloutWrapper.className = "flex gap-4 bg-blue-50/50 border border-blue-100 p-4 rounded-xl shadow-sm"; calloutWrapper.innerHTML = `<div class="text-blue-500 pt-1"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></div>`;
                 const textarea = document.createElement('textarea'); textarea.rows = 1; textarea.className = "block-input w-full bg-transparent text-slate-700 outline-none resize-none placeholder-blue-300 border-none p-0 focus:ring-0"; textarea.placeholder = "Information text..."; textarea.value = content; textarea.oninput = function() { this.style.height=''; this.style.height=this.scrollHeight+'px'; }; calloutWrapper.appendChild(textarea); wrapper.appendChild(calloutWrapper);
@@ -1097,8 +1349,8 @@
                 navigateTo('profile', data.authorId); 
                 if(data.authorId !== currentUser.uid) {
                     document.getElementById('profile-page-name').textContent = data.authorName;
-                    document.getElementById('profile-page-email').textContent = "Contributor"; 
                     document.getElementById('profile-page-avatar').innerHTML = getAvatar(data, "w-32 h-32 text-4xl");
+                    document.getElementById('profile-page-email').textContent = "Contributor"; 
                 }
             };
 
