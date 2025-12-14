@@ -762,7 +762,6 @@
             if (type === 'image') {
                 let images = [];
                 try {
-                    // Try to parse as JSON array (new multi-image format)
                     if (content.trim().startsWith('[')) {
                         images = JSON.parse(content);
                     } else {
@@ -775,10 +774,10 @@
                             if(isNaN(width)) width = 100;
                             spotlight = parts[1] === 'true';
                         }
-                        images = [{url: content, width: width, spotlight: spotlight}];
+                        images = [{url: content, width: width, spotlight: spotlight, x: 0}];
                     }
                 } catch(e) {
-                    images = [{url: content, width: 100, spotlight: false}];
+                    images = [{url: content, width: 100, spotlight: false, x: 0}];
                 }
 
                 let html = '<div class="flex flex-wrap gap-4 items-start mb-6 w-full">';
@@ -787,8 +786,9 @@
                     const cursorClass = img.spotlight ? 'cursor-zoom-in' : '';
                     const escapedUrl = img.url.replace(/'/g, "\\'");
                     const clickAttr = img.spotlight ? `onclick="openLightbox('${escapedUrl}')"` : '';
+                    const xOffset = img.x || 0;
                     
-                    html += `<div style="width: ${img.width}%;" class="relative transition-all duration-300">
+                    html += `<div style="width: ${img.width}%; transform: translateX(${xOffset}px);" class="relative transition-all duration-300">
                                 <img src="${img.url}" class="w-full h-auto rounded-lg shadow-sm hover:shadow-md transition-shadow ${cursorClass}" alt="Image" ${clickAttr}>
                              </div>`;
                 });
@@ -1128,11 +1128,11 @@
                         images = JSON.parse(content);
                     } else if (content) {
                         // Legacy single image
-                        let w = 100; let s = false;
+                        let w = 100; let s = false; let x = 0;
                         if (language && language.includes('|')) { 
                             const p = language.split('|'); w=parseInt(p[0])||100; s=p[1]==='true';
                         }
-                        images = [{url: content, width: w, spotlight: s}];
+                        images = [{url: content, width: w, spotlight: s, x: x}];
                     }
                 } catch(e) { images = []; }
 
@@ -1183,6 +1183,20 @@
                     hiddenInput.value = JSON.stringify(images);
                 };
 
+                const recalculateLayout = (imgs) => {
+                    const count = imgs.length;
+                    if (count === 0) return;
+                    let w = 100;
+                    if (count === 2) w = 48; // Leaves ~4% gap
+                    if (count === 3) w = 31; // Leaves ~7% gap total
+                    if (count === 4) w = 48; // 2x2 grid
+                    if (count >= 5) w = 31; // 3 per row grid
+
+                    imgs.forEach(img => {
+                         img.width = w; 
+                    });
+                };
+
                 const renderImages = () => {
                     previewArea.innerHTML = '';
                     if(images.length === 0) {
@@ -1193,7 +1207,57 @@
                         const frame = document.createElement('div');
                         frame.className = "relative group/frame transition-all duration-75 ease-out rounded-lg border border-slate-200 bg-slate-50";
                         frame.style.width = `${imgData.width}%`;
+                        frame.style.transform = `translateX(${imgData.x || 0}px)`; // Apply X-Offset
                         
+                        // Drag Reordering Logic (Move Handle)
+                        const moveHandle = document.createElement('div');
+                        moveHandle.className = "absolute top-2 left-2 p-1.5 bg-white text-slate-500 rounded-md shadow-sm border border-slate-200 cursor-move opacity-0 group-hover/frame:opacity-100 hover:text-blue-600 transition-all z-20";
+                        moveHandle.innerHTML = '<i data-lucide="move" class="w-3 h-3"></i>';
+                        
+                        moveHandle.addEventListener('mousedown', (e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const draggingIdx = index;
+                            
+                            // Simple Swap on Drag Over
+                            const onMouseMove = (ev) => {
+                                // Find which item we are hovering over
+                                const elements = Array.from(previewArea.children);
+                                const hoveredEl = elements.find(el => {
+                                    const rect = el.getBoundingClientRect();
+                                    return ev.clientX >= rect.left && ev.clientX <= rect.right && ev.clientY >= rect.top && ev.clientY <= rect.bottom;
+                                });
+                                
+                                if(hoveredEl) {
+                                    const hoverIdx = elements.indexOf(hoveredEl);
+                                    if(hoverIdx !== -1 && hoverIdx !== draggingIdx) {
+                                        // Swap
+                                        const temp = images[draggingIdx];
+                                        images[draggingIdx] = images[hoverIdx];
+                                        images[hoverIdx] = temp;
+                                        renderImages();
+                                        // Since we re-rendered, drag is lost technically in vanilla JS this way, 
+                                        // but for simple swapping usually we need drag events. 
+                                        // To keep it robust without drag events, we stop listener and rely on click-drag.
+                                        // BETTER: Just rely on click-drag swapping one step at a time or use HTML5 DnD.
+                                        // Let's stick to a simpler "Swap with Next/Prev" button approach inside? 
+                                        // OR: Use standard drag logic but without re-rendering mid-drag causing loss of state.
+                                        // Current approach: Just trigger one swap then stop to avoid loop
+                                        document.removeEventListener('mousemove', onMouseMove);
+                                        document.removeEventListener('mouseup', onMouseUp);
+                                        updateState();
+                                    }
+                                }
+                            };
+                            
+                            const onMouseUp = () => {
+                                document.removeEventListener('mousemove', onMouseMove);
+                                document.removeEventListener('mouseup', onMouseUp);
+                            };
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                        });
+
+
                         // Image
                         const imgTag = document.createElement('img');
                         imgTag.src = imgData.url;
@@ -1224,6 +1288,7 @@
                         delBtn.onclick = (e) => { 
                             e.stopPropagation();
                             images.splice(index, 1);
+                            recalculateLayout(images); 
                             updateState(); renderImages();
                         };
 
@@ -1231,12 +1296,12 @@
                         controls.appendChild(delBtn);
 
                         // Resize Handle
-                        const handle = document.createElement('div');
-                        handle.className = "absolute bottom-2 right-2 w-6 h-6 bg-white text-slate-500 rounded-full shadow-md border border-slate-200 flex items-center justify-center cursor-nwse-resize opacity-0 group-hover/frame:opacity-100 hover:bg-blue-50 hover:text-blue-600 z-20";
-                        handle.innerHTML = '<i data-lucide="arrow-down-right" class="w-3.5 h-3.5"></i>';
+                        const resizeHandle = document.createElement('div');
+                        resizeHandle.className = "absolute bottom-2 right-2 w-6 h-6 bg-white text-slate-500 rounded-full shadow-md border border-slate-200 flex items-center justify-center cursor-nwse-resize opacity-0 group-hover/frame:opacity-100 hover:bg-blue-50 hover:text-blue-600 z-20";
+                        resizeHandle.innerHTML = '<i data-lucide="arrow-down-right" class="w-3.5 h-3.5"></i>';
                         
-                        // Drag Logic
-                        handle.addEventListener('mousedown', (e) => {
+                        // Resize Drag Logic
+                        resizeHandle.addEventListener('mousedown', (e) => {
                             e.preventDefault(); e.stopPropagation();
                             const startX = e.clientX;
                             const startWidth = frame.offsetWidth;
@@ -1261,9 +1326,43 @@
                             document.addEventListener('mouseup', onMouseUp);
                         });
 
+                        // X-Position (Nudge) Handle
+                        const xHandle = document.createElement('div');
+                        xHandle.className = "absolute bottom-2 left-1/2 -translate-x-1/2 w-8 h-6 bg-white text-slate-500 rounded-full shadow-md border border-slate-200 flex items-center justify-center cursor-ew-resize opacity-0 group-hover/frame:opacity-100 hover:bg-blue-50 hover:text-blue-600 z-20 group/xhandle";
+                        xHandle.innerHTML = '<i data-lucide="arrow-left-right" class="w-3.5 h-3.5"></i>';
+                        
+                        // Tooltip for X value
+                        const xTooltip = document.createElement('div');
+                        xTooltip.className = "absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/xhandle:opacity-100 transition-opacity whitespace-nowrap pointer-events-none";
+                        xTooltip.textContent = `X: ${imgData.x || 0}px`;
+                        xHandle.appendChild(xTooltip);
+
+                        xHandle.addEventListener('mousedown', (e) => {
+                            e.preventDefault(); e.stopPropagation();
+                            const startX = e.clientX;
+                            const startVal = imgData.x || 0;
+
+                            const onMouseMove = (ev) => {
+                                const dx = ev.clientX - startX;
+                                imgData.x = startVal + dx;
+                                frame.style.transform = `translateX(${imgData.x}px)`;
+                                xTooltip.textContent = `X: ${imgData.x}px`;
+                            };
+
+                            const onMouseUp = () => {
+                                document.removeEventListener('mousemove', onMouseMove);
+                                document.removeEventListener('mouseup', onMouseUp);
+                                updateState();
+                            };
+                            document.addEventListener('mousemove', onMouseMove);
+                            document.addEventListener('mouseup', onMouseUp);
+                        });
+
+                        frame.appendChild(moveHandle);
                         frame.appendChild(imgTag);
                         frame.appendChild(controls);
-                        frame.appendChild(handle);
+                        frame.appendChild(resizeHandle);
+                        frame.appendChild(xHandle);
                         previewArea.appendChild(frame);
                     });
                     lucide.createIcons();
@@ -1272,7 +1371,8 @@
                 // Add Logic
                 const addImage = (url) => {
                     if(!url) return;
-                    images.push({url: url, width: 48, spotlight: false}); // Default to ~half width
+                    images.push({url: url, width: 100, spotlight: false, x: 0}); // Initial width, will be recalculated
+                    recalculateLayout(images); // Trigger auto-adjust
                     updateState();
                     renderImages();
                     urlInput.value = '';
